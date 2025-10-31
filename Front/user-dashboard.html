@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarEnergy - Panel de Usuario</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .dashboard-card {
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        #energyChart, #powerFlowChart, #savingsChart {
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Sidebar and Content Container -->
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar bg-blue-900 text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-200 ease-in-out z-50">
+            <div class="flex items-center space-x-2 px-4">
+                <i data-feather="sun" class="text-yellow-500 w-8 h-8"></i>
+                <span class="text-xl font-bold">SolarEnergy</span>
+            </div>
+            <nav>
+                <div class="px-4 py-3 text-blue-200 text-sm font-medium">MENÚ PRINCIPAL</div>
+                <a href="#" class="block py-2.5 px-4 rounded bg-blue-800 text-white flex items-center">
+                    <i data-feather="home" class="mr-2 w-5 h-5"></i> Inicio
+                </a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="activity" class="mr-2 w-5 h-5"></i> Monitoreo
+                </a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="bar-chart-2" class="mr-2 w-5 h-5"></i> Estadísticas
+                </a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="credit-card" class="mr-2 w-5 h-5"></i> Pagos
+                </a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="settings" class="mr-2 w-5 h-5"></i> Configuración
+                </a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="help-circle" class="mr-2 w-5 h-5"></i> Soporte
+                </a>
+                
+                <div class="px-4 py-3 text-blue-200 text-sm font-medium mt-8">TU SISTEMA</div>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="battery" class="mr-2 w-5 h-5"></i> Baterías
+                </a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="calendar" class="mr-2 w-5 h-5"></i> Mantenimiento
+                </a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="file-text" class="mr-2 w-5 h-5"></i> Documentos
+                </a>
+            </nav>
+        </div>
+
+        <!-- Mobile sidebar backdrop -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 z-40 md:hidden" style="display: none;" id="sidebarBackdrop"></div>
+
+        <!-- Content -->
+        <div class="flex-1 md:ml-64">
+            <!-- Top Navigation -->
+            <nav class="bg-white shadow-sm">
+                <div class="flex justify-between items-center px-6 py-3">
+                    <div class="flex items-center">
+                        <button id="mobileMenuButton" class="md:hidden focus:outline-none mr-4">
+                            <i data-feather="menu" class="w-6 h-6 text-blue-900"></i>
+                        </button>
+                        <h2 class="text-xl font-semibold text-blue-900">Panel de Monitoreo</h2>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="p-2 rounded-full hover:bg-gray-100 transition">
+                            <i data-feather="bell" class="w-5 h-5 text-blue-900"></i>
+                        </button>
+                        <div class="relative">
+                            <button id="userMenuButton" class="flex items-center space-x-2 focus:outline-none">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <i data-feather="user" class="w-4 h-4 text-blue-900"></i>
+                                </div>
+                                <span class="text-blue-900 font-medium hidden md:inline">Usuario</span>
+                            </button>
+                            <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Perfil</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Configuración</a>
+                                <a href="index.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cerrar Sesión</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="p-6">
+                <!-- Dashboard Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-gray-500 text-sm font-medium">Generación Hoy</h3>
+                                <p class="text-2xl font-bold text-blue-900 mt-1">12.8 <span class="text-lg">kWh</span></p>
+                            </div>
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i data-feather="sun" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">vs. promedio</span>
+                                <span class="text-green-600 font-medium flex items-center">
+                                    <i data-feather="arrow-up" class="w-4 h-4 mr-1"></i> 8.2%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-gray-500 text-sm font-medium">Consumo Hoy</h3>
+                                <p class="text-2xl font-bold text-blue-900 mt-1">8.5 <span class="text-lg">kWh</span></p>
+                            </div>
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                <i data-feather="zap" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">vs. promedio</span>
+                                <span class="text-red-600 font-medium flex items-center">
+                                    <i data-feather="arrow-down" class="w-4 h-4 mr-1"></i> 3.1%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-gray-500 text-sm font-medium">Autosuficiencia</h3>
+                                <p class="text-2xl font-bold text-blue-900 mt-1">78<span class="text-lg">%</span></p>
+                            </div>
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i data-feather="battery" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">vs. ayer</span>
+                                <span class="text-green-600 font-medium flex items-center">
+                                    <i data-feather="arrow-up" class="w-4 h-4 mr-1"></i> 5.4%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-gray-500 text-sm font-medium">Ahorro Mensual</h3>
+                                <p class="text-2xl font-bold text-blue-900 mt-1">$185,000 <span class="text-lg">COP</span></p>
+                            </div>
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                <i data-feather="dollar-sign" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">vs. mes pasado</span>
+                                <span class="text-green-600 font-medium flex items-center">
+                                    <i data-feather="arrow-up" class="w-4 h-4 mr-1"></i> 12.7%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-blue-900">Generación de Energía</h3>
+                            <div class="flex items-center space-x-2">
+                                <button class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-900">Hoy</button>
+                                <button class="text-xs px-2 py-1 rounded hover:bg-gray-100">Semana</button>
+                                <button class="text-xs px-2 py-1 rounded hover:bg-gray-100">Mes</button>
+                            </div>
+                        </div>
+                        <canvas id="energyChart"></canvas>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-blue-900">Flujo de Energía</h3>
+                            <div class="flex items-center space-x-2">
+                                <button class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-900">Actual</button>
+                                <button class="text-xs px-2 py-1 rounded hover:bg-gray-100">Promedio</button>
+                            </div>
+                        </div>
+                        <canvas id="powerFlowChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Additional Information -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-blue-900">Ahorro y Retorno de Inversión</h3>
+                        </div>
+                        <canvas id="savingsChart"></canvas>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-blue-900">Estado del Sistema</h3>
+                            <span class="text-xs px-2 py-1 rounded bg-green-100 text-green-800">Operativo</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-gray-500 text-sm font-medium mb-1">Paneles Solares</h4>
+                                <div class="flex items-center justify-between">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 92%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-600 ml-2">92%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-gray-500 text-sm font-medium mb-1">Inversor</h4>
+                                <div class="flex items-center justify-between">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-green-600 h-2.5 rounded-full" style="width: 100%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-600 ml-2">100%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-gray-500 text-sm font-medium mb-1">Baterías</h4>
+                                <div class="flex items-center justify-between">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-yellow-600 h-2.5 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-600 ml-2">65%</span>
+                                </div>
+                            </div>
+                            <div class="pt-4 border-t">
+                                <h4 class="text-gray-500 text-sm font-medium mb-1">Próximo Mantenimiento</h4>
+                                <div class="flex items-center mt-2">
+                                    <div class="p-2 rounded-full bg-blue-100 text-blue-900 mr-3">
+                                        <i data-feather="calendar" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-blue-900 font-medium">15 Noviembre 2023</p>
+                                        <p class="text-gray-500 text-sm">Quedan 28 días</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize AOS animations
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+
+        // Initialize feather icons
+        feather.replace();
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuButton').addEventListener('click', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            backdrop.style.display = backdrop.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Close sidebar when clicking on backdrop
+        document.getElementById('sidebarBackdrop').addEventListener('click', function() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.add('-translate-x-full');
+            this.style.display = 'none';
+        });
+
+        // User menu toggle
+        document.getElementById('userMenuButton').addEventListener('click', function() {
+            document.getElementById('userMenu').classList.toggle('hidden');
+        });
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('userMenu').contains(e.target) && !document.getElementById('userMenuButton').contains(e.target)) {
+                document.getElementById('userMenu').classList.add('hidden');
+            }
+        });
+
+        // Generate random data for charts (in a real app, this would come from an API)
+        function generateRandomData(hours, min, max) {
+            return Array.from({length: hours}, () => Math.floor(Math.random() * (max - min + 1)) + min);
+        }
+
+        // Energy Generation Chart
+        const energyCtx = document.getElementById('energyChart').getContext('2d');
+        const hours = Array.from({length: 24}, (_, i) => i);
+        const energyData = generateRandomData(24, 0, 1200); // Watts
+
+        new Chart(energyCtx, {
+            type: 'line',
+            data: {
+                labels: hours.map(h => `${h}:00`),
+                datasets: [{
+                    label: 'Generación (W)',
+                    data: energyData,
+                    backgroundColor: 'rgba(255, 184, 28, 0.2)',
+                    borderColor: 'rgba(255, 184, 28, 1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Watts (W)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hora del día'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Power Flow Chart (Doughnut)
+        const powerFlowCtx = document.getElementById('powerFlowChart').getContext('2d');
+        new Chart(powerFlowCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Autoconsumo', 'Exportado a red', 'Importado de red', 'Almacenado'],
+                datasets: [{
+                    data: [65, 15, 10, 10],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(99, 102, 241, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(245, 158, 11, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Savings Chart
+        const savingsCtx = document.getElementById('savingsChart').getContext('2d');
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const savingsData = generateRandomData(12, 100000, 250000);
+        const costData = generateRandomData(12, 180000, 350000);
+
+        new Chart(savingsCtx, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Costo tradicional',
+                        data: costData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Con sistema solar',
+                        data: savingsData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.raw.toLocaleString('es-CO');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString('es-CO');
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'COP'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

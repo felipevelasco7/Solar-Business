@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarEnergy - Calculadora Solar</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        solar: {
+                            primary: '#FFB81C',
+                            dark: '#1E3A8A',
+                            light: '#F0F9FF',
+                            accent: '#10B981',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1E3A8A 0%, #10B981 100%);
+        }
+        .dashboard-card {
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i data-feather="sun" class="text-solar-primary w-8 h-8"></i>
+                    <span class="text-xl font-bold text-solar-dark">SolarEnergy</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#calculator" class="text-solar-dark hover:text-solar-primary transition">Calculadora</a>
+                    <a href="#benefits" class="text-solar-dark hover:text-solar-primary transition">Beneficios</a>
+                    <a href="#contact" class="text-solar-dark hover:text-solar-primary transition">Contacto</a>
+                    <a href="login.html" class="bg-solar-primary text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Iniciar Sesión</a>
+                </div>
+                <button class="md:hidden focus:outline-none">
+                    <i data-feather="menu" class="w-6 h-6 text-solar-dark"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-20">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-10 md:mb-0" data-aos="fade-right">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6">Calcula tu ahorro con energía solar</h1>
+                    <p class="text-xl mb-8">Descubre cuánto puedes ahorrar instalando paneles solares en tu hogar o negocio en Cali, Colombia.</p>
+                    <a href="#calculator" class="bg-white text-solar-dark font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition inline-flex items-center">
+                        Calcular ahora <i data-feather="arrow-right" class="ml-2 w-5 h-5"></i>
+                    </a>
+                </div>
+                <div class="md:w-1/2" data-aos="fade-left">
+                    <img src="http://static.photos/technology/640x360/1" alt="Paneles solares" class="rounded-lg shadow-2xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calculator Section -->
+    <section id="calculator" class="py-16 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-solar-dark mb-4">Calculadora Solar</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Ingresa tus datos de consumo eléctrico para obtener un estimado personalizado.</p>
+            </div>
+            
+            <div class="bg-solar-light rounded-xl p-8 shadow-lg max-w-3xl mx-auto" data-aos="fade-up">
+                <form id="solarCalculatorForm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="consumption" class="block text-solar-dark font-medium mb-2">Consumo mensual (kWh)</label>
+                            <input type="number" id="consumption" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary" placeholder="Ej: 350" required>
+                        </div>
+                        <div>
+                            <label for="bill" class="block text-solar-dark font-medium mb-2">Valor factura mensual (COP)</label>
+                            <input type="number" id="bill" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary" placeholder="Ej: 250000" required>
+                        </div>
+                        <div>
+                            <label for="roofType" class="block text-solar-dark font-medium mb-2">Tipo de techo</label>
+                            <select id="roofType" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary">
+                                <option value="inclinado">Inclinado</option>
+                                <option value="plano">Plano</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="orientation" class="block text-solar-dark font-medium mb-2">Orientación del techo</label>
+                            <select id="orientation" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary">
+                                <option value="norte">Norte</option>
+                                <option value="sur">Sur</option>
+                                <option value="este">Este</option>
+                                <option value="oeste">Oeste</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <button type="submit" class="w-full bg-solar-primary text-white font-semibold px-6 py-3 rounded-lg hover:bg-yellow-600 transition flex items-center justify-center">
+                            <i data-feather="calculator" class="mr-2 w-5 h-5"></i> Calcular Ahorro
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section (Hidden by default) -->
+            <div id="results" class="hidden max-w-3xl mx-auto mt-12" data-aos="fade-up">
+                <div class="bg-white rounded-xl p-8 shadow-lg border border-gray-200">
+                    <h3 class="text-2xl font-bold text-solar-dark mb-6 text-center">Tu Reporte Personalizado</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-solar-light p-6 rounded-lg">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-solar-primary p-3 rounded-full mr-4">
+                                    <i data-feather="sun" class="text-white w-6 h-6"></i>
+                                </div>
+                                <h4 class="font-bold text-solar-dark">Sistema Solar Recomendado</h4>
+                            </div>
+                            <div class="space-y-3">
+                                <p><span class="font-semibold">kWp requeridos:</span> <span id="requiredKW" class="text-solar-primary">3.5 kWp</span></p>
+                                <p><span class="font-semibold">Número de paneles:</span> <span id="panelCount" class="text-solar-primary">10</span></p>
+                                <p><span class="font-semibold">Área necesaria:</span> <span id="requiredArea" class="text-solar-primary">18 m²</span></p>
+                                <p><span class="font-semibold">Inversión estimada:</span> <span id="estimatedCost" class="text-solar-primary">$12,500,000 COP</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-solar-light p-6 rounded-lg">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-solar-accent p-3 rounded-full mr-4">
+                                    <i data-feather="dollar-sign" class="text-white w-6 h-6"></i>
+                                </div>
+                                <h4 class="font-bold text-solar-dark">Ahorro Estimado</h4>
+                            </div>
+                            <div class="space-y-3">
+                                <p><span class="font-semibold">Ahorro mensual:</span> <span id="monthlySavings" class="text-solar-accent">$200,000 COP</span></p>
+                                <p><span class="font-semibold">Ahorro anual:</span> <span id="annualSavings" class="text-solar-accent">$2,400,000 COP</span></p>
+                                <p><span class="font-semibold">Retorno de inversión:</span> <span id="roiYears" class="text-solar-accent">5.2 años</span></p>
+                                <p><span class="font-semibold">Vida útil del sistema:</span> <span class="text-solar-accent">25+ años</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <h4 class="font-bold text-solar-dark mb-4">Comparación de Costos</h4>
+                        <canvas id="costComparisonChart" height="150"></canvas>
+                    </div>
+
+                    <div class="text-center">
+                        <button id="saveReport" class="bg-solar-primary text-white font-semibold px-6 py-2 rounded-lg hover:bg-yellow-600 transition inline-flex items-center mr-4">
+                            <i data-feather="download" class="mr-2 w-4 h-4"></i> Guardar Reporte
+                        </button>
+                        <button id="contactUs" class="bg-solar-dark text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-900 transition inline-flex items-center">
+                            <i data-feather="mail" class="mr-2 w-4 h-4"></i> Contactar Asesor
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section id="benefits" class="py-16 bg-solar-light">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-solar-dark mb-4">Beneficios de la Energía Solar</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Descubre por qué cada vez más personas en Cali están optando por la energía solar.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md" data-aos="fade-up" data-aos-delay="100">
+                    <div class="bg-solar-primary bg-opacity-10 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                        <i data-feather="dollar-sign" class="text-solar-primary w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-solar-dark mb-2">Ahorro Económico</h3>
+                    <p class="text-gray-600">Reduce hasta el 100% de tu factura eléctrica con un sistema solar adecuado a tus necesidades.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md" data-aos="fade-up" data-aos-delay="200">
+                    <div class="bg-solar-primary bg-opacity-10 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                        <i data-feather="shield" class="text-solar-primary w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-solar-dark mb-2">Protección Ambiental</h3>
+                    <p class="text-gray-600">Contribuye a reducir las emisiones de CO2 y el impacto ambiental de la generación de energía.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md" data-aos="fade-up" data-aos-delay="300">
+                    <div class="bg-solar-primary bg-opacity-10 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                        <i data-feather="zap" class="text-solar-primary w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-solar-dark mb-2">Independencia Energética</h3>
+                    <p class="text-gray-600">Protege tu hogar o negocio contra aumentos en las tarifas eléctricas y cortes de energía.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-16 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-solar-dark mb-4">Contacto</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">¿Listo para dar el paso hacia la energía solar? Contáctanos para una asesoría personalizada.</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-12">
+                <div class="md:w-1/2" data-aos="fade-right">
+                    <form class="space-y-6">
+                        <div>
+                            <label for="name" class="block text-solar-dark font-medium mb-2">Nombre completo</label>
+                            <input type="text" id="name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary" placeholder="Tu nombre">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-solar-dark font-medium mb-2">Correo electrónico</label>
+                            <input type="email" id="email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary" placeholder="tu@email.com">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-solar-dark font-medium mb-2">Teléfono</label>
+                            <input type="tel" id="phone" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary" placeholder="+57 300 123 4567">
+                        </div>
+                        <div>
+                            <label for="message" class="block text-solar-dark font-medium mb-2">Mensaje</label>
+                            <textarea id="message" rows="4" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-solar-primary" placeholder="Cuéntanos sobre tu proyecto"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-solar-primary text-white font-semibold px-6 py-3 rounded-lg hover:bg-yellow-600 transition flex items-center justify-center">
+                            <i data-feather="send" class="mr-2 w-5 h-5"></i> Enviar Mensaje
+                        </button>
+                    </form>
+                </div>
+                <div class="md:w-1/2" data-aos="fade-left">
+                    <div class="bg-solar-light p-8 rounded-xl h-full">
+                        <h3 class="text-xl font-bold text-solar-dark mb-6">Información de Contacto</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div class="bg-solar-primary bg-opacity-10 p-3 rounded-full mr-4">
+                                    <i data-feather="map-pin" class="text-solar-primary w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-solar-dark mb-1">Oficina Principal</h4>
+                                    <p class="text-gray-600">Calle 25N #6AN-45, Cali, Valle del Cauca, Colombia</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-solar-primary bg-opacity-10 p-3 rounded-full mr-4">
+                                    <i data-feather="phone" class="text-solar-primary w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-solar-dark mb-1">Teléfono</h4>
+                                    <p class="text-gray-600">+57 (2) 485 7890</p>
+                                    <p class="text-gray-600">+57 318 456 7890</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-solar-primary bg-opacity-10 p-3 rounded-full mr-4">
+                                    <i data-feather="mail" class="text-solar-primary w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-solar-dark mb-1">Correo Electrónico</h4>
+                                    <p class="text-gray-600">info@solarenergy.co</p>
+                                    <p class="text-gray-600">ventas@solarenergy.co</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-solar-primary bg-opacity-10 p-3 rounded-full mr-4">
+                                    <i data-feather="clock" class="text-solar-primary w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-solar-dark mb-1">Horario de Atención</h4>
+                                    <p class="text-gray-600">Lunes a Viernes: 8:00 am - 6:00 pm</p>
+                                    <p class="text-gray-600">Sábados: 9:00 am - 1:00 pm</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-solar-dark text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i data-feather="sun" class="text-solar-primary w-8 h-8"></i>
+                        <span class="text-xl font-bold">SolarEnergy</span>
+                    </div>
+                    <p class="mt-2 text-gray-300">Energía limpia para un futuro sostenible.</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i data-feather="facebook" class="w-5 h-5"></i>
+                    </a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i data-feather="instagram" class="w-5 h-5"></i>
+                    </a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i data-feather="linkedin" class="w-5 h-5"></i>
+                    </a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">
+                        <i data-feather="youtube" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-gray-300">&copy; 2023 SolarEnergy. Todos los derechos reservados.</p>
+                </div>
+                <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-6">
+                    <a href="#" class="text-gray-300 hover:text-white transition">Términos y Condiciones</a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">Política de Privacidad</a>
+                    <a href="#" class="text-gray-300 hover:text-white transition">Preguntas Frecuentes</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize AOS animations
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+
+        // Initialize feather icons
+        feather.replace();
+
+        // Solar Calculator Logic
+        document.getElementById('solarCalculatorForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get input values
+            const consumption = parseFloat(document.getElementById('consumption').value);
+            const bill = parseFloat(document.getElementById('bill').value);
+            const roofType = document.getElementById('roofType').value;
+            const orientation = document.getElementById('orientation').value;
+            
+            // Solar panel specifications (can be changed)
+            const panelWattage = 350; // Watts per panel
+            const panelArea = 1.7; // m² per panel
+            const panelEfficiency = 0.85; // System efficiency factor
+            const solarHours = 4.5; // Average daily peak sun hours in Cali
+            const costPerWatt = 3500; // COP per watt installed
+            
+            // Calculations
+            const dailyConsumption = consumption / 30; // kWh per day
+            const requiredSystemSize = dailyConsumption / (solarHours * panelEfficiency); // kW
+            const requiredPanels = Math.ceil((requiredSystemSize * 1000) / panelWattage);
+            const requiredArea = Math.ceil(requiredPanels * panelArea);
+            const systemCost = Math.round(requiredSystemSize * 1000 * costPerWatt);
+            
+            // Savings calculations
+            const monthlySavings = Math.round(bill * 0.9); // Assuming 90% savings
+            const annualSavings = monthlySavings * 12;
+            const roiYears = (systemCost / annualSavings).toFixed(1);
+            
+            // Update results
+            document.getElementById('requiredKW').textContent = requiredSystemSize.toFixed(1) + ' kWp';
+            document.getElementById('panelCount').textContent = requiredPanels;
+            document.getElementById('requiredArea').textContent = requiredArea + ' m²';
+            document.getElementById('estimatedCost').textContent = '$' + systemCost.toLocaleString('es-CO') + ' COP';
+            document.getElementById('monthlySavings').textContent = '$' + monthlySavings.toLocaleString('es-CO') + ' COP';
+            document.getElementById('annualSavings').textContent = '$' + annualSavings.toLocaleString('es-CO') + ' COP';
+            document.getElementById('roiYears').textContent = roiYears + ' años';
+            
+            // Show results
+            document.getElementById('results').classList.remove('hidden');
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            
+            // Create comparison chart
+            createComparisonChart(bill, monthlySavings);
+        });
+
+        function createComparisonChart(currentBill, monthlySavings) {
+            const ctx = document.getElementById('costComparisonChart').getContext('2d');
+            
+            if (window.costComparisonChart) {
+                window.costComparisonChart.destroy();
+            }
+            
+            window.costComparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Actual', 'Con Paneles Solares'],
+                    datasets: [{
+                        label: 'Costo Mensual (COP)',
+                        data: [currentBill, currentBill - monthlySavings],
+                        backgroundColor: [
+                            'rgba(30, 58, 138, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(30, 58, 138, 1)',
+                            'rgba(16, 185, 129, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('es-CO');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.raw.toLocaleString('es-CO');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Save report button
+        document.getElementById('saveReport').addEventListener('click', function() {
+            alert('Reporte guardado (simulación). En una implementación real, esto generaría un PDF.');
+        });
+
+        // Contact us button
+        document.getElementById('contactUs').addEventListener('click', function() {
+            document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
