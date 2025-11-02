@@ -43,7 +43,11 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    // tomar id del params; si no existe o no es número, usar el id del usuario autenticado
+    let id = Number(req.params.id);
+    if (!id || Number.isNaN(id)) id = req.user.id;
+
+    // autorización: SUPPORT puede cualquier cosa; CLIENT solo su propio registro
     if (req.user.role !== 'SUPPORT' && req.user.id !== id) return res.status(403).json({ message: 'Forbidden' });
 
     const { name, email, password, role } = req.body;
@@ -52,10 +56,11 @@ exports.update = async (req, res, next) => {
 
     if (name) user.name = name;
     if (email) user.email = email;
-    if (password) user.password = password;
+    if (password) user.password = password; // hook antes de guardar hará el hash
     if (role && req.user.role === 'SUPPORT') user.role = role === 'SUPPORT' ? 'SUPPORT' : 'CLIENT';
 
     await user.save();
+
     res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     next(err);
