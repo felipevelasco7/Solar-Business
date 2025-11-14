@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Documentos - SolarEnergy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex">
+  <div class="sidebar bg-blue-900 text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-200 ease-in-out z-50">
+    <div class="flex items-center space-x-2 px-4">
+      <i data-feather="sun" class="text-yellow-500 w-8 h-8"></i>
+      <span class="text-xl font-bold">SolarEnergy</span>
+    </div>
+    <nav>
+      <div class="px-4 py-3 text-blue-200 text-sm font-medium">MENÚ PRINCIPAL</div>
+      <a id="linkDashboard" href="user-dashboard.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center">
+        <i data-feather="home" class="mr-2 w-5 h-5"></i> Inicio
+      </a>
+      <div id="supportItem" class="px-2 mt-2"></div>
+      <a href="monitoring.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+        <i data-feather="activity" class="mr-2 w-5 h-5"></i> Monitoreo
+      </a>
+      <a href="statistics.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+        <i data-feather="bar-chart-2" class="mr-2 w-5 h-5"></i> Estadísticas
+      </a>
+      <a href="payments.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+        <i data-feather="credit-card" class="mr-2 w-5 h-5"></i> Pagos
+      </a>
+
+      <div class="px-4 py-3 text-blue-200 text-sm font-medium mt-8">TU SISTEMA</div>
+      <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+        <i data-feather="battery" class="mr-2 w-5 h-5"></i> Baterías
+      </a>
+      <a href="maintenance.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+        <i data-feather="calendar" class="mr-2 w-5 h-5"></i> Mantenimiento
+      </a>
+      <a href="documents.html" class="block py-2.5 px-4 rounded bg-blue-800 text-white flex items-center mt-1">
+        <i data-feather="file-text" class="mr-2 w-5 h-5"></i> Documentos
+      </a>
+    </nav>
+    <div class="px-4 mt-10">
+      <button id="btnLogout" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded transition">
+        <i data-feather="log-out" class="inline w-4 h-4 mr-2"></i> Cerrar sesión
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 flex flex-col md:ml-64">
+    <header class="md:hidden w-full bg-white border-b p-3 flex justify-between items-center">
+      <button id="openSidebar" class="text-blue-900">
+        <i data-feather="menu" class="w-6 h-6"></i>
+      </button>
+      <div class="text-lg font-bold text-blue-900">SolarEnergy - Documentos</div>
+      <button id="m_btnLogout" class="text-sm px-2 py-1 rounded text-red-600">Cerrar</button>
+    </header>
+
+    <main class="flex-1 p-6 space-y-6">
+      <section class="bg-white p-4 rounded shadow">
+        <h2 class="text-lg font-semibold mb-3">Documentos</h2>
+        <p class="text-gray-600">Aquí puedes subir y ver manuales, garantías y otra documentación.</p>
+        <div class="mt-4">
+          <div class="h-48 bg-gray-50 border rounded flex items-center justify-center text-gray-400">Lista de Documentos</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function parseJwt(token) { try { const b = token.split('.')[1]; return JSON.parse(decodeURIComponent(atob(b).split('').map(c=>('%'+('00'+c.charCodeAt(0).toString(16)).slice(-2))).join(''))); } catch(e){return{}} }
+    function loadProfile(){ try{ const t = localStorage.getItem('token'); if(!t) return; const payload = parseJwt(t); const myRole = payload.role; const supportEl = document.getElementById('supportItem'); if(!supportEl) return; if(myRole==='SUPPORT'){ supportEl.innerHTML = `<a href="admin-dashboard.html" class="block py-2.5 px-4 rounded bg-blue-800 text-white flex items-center mt-4"><i data-feather="help-circle" class="mr-2 w-5 h-5 text-blue-200"></i> Admin de usuarios</a>`; } else { supportEl.innerHTML = `<a href="soporte.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1"><i data-feather="help-circle" class="mr-2 w-5 h-5"></i> Soporte</a>`; } if(typeof feather !== 'undefined') feather.replace(); }catch(e){} }
+    document.addEventListener('DOMContentLoaded', function(){ if(typeof feather !== 'undefined') feather.replace(); loadProfile(); });
+    document.getElementById('btnLogout').addEventListener('click', ()=>{ localStorage.removeItem('token'); window.location.href='login.html'; });
+    document.getElementById('m_btnLogout').addEventListener('click', ()=>{ localStorage.removeItem('token'); window.location.href='login.html'; });
+    document.getElementById('openSidebar').addEventListener('click', ()=>{ document.querySelector('.sidebar').classList.toggle('-translate-x-full'); const backdrop = document.getElementById('sidebarBackdrop'); if(backdrop) backdrop.style.display = backdrop.style.display === 'block' ? 'none' : 'block'; });
+  </script>
+</body>
+</html>

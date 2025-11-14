@@ -29,12 +29,17 @@
                 <a id="linkDashboard" href="user-dashboard.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center">
                     <i data-feather="home" class="mr-2 w-5 h-5"></i> Inicio
                 </a>
-                <a href="user-dashboard.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+    
+                <a href="monitoring.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
                     <i data-feather="activity" class="mr-2 w-5 h-5"></i> Monitoreo
                 </a>
-                <a href="user-dashboard.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
-                    <i data-feather="bar-chart-2" class="mr-2 w-5 h-5"></i> Estadísticas
+                <a href="payments.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                    <i data-feather="credit-card" class="mr-2 w-5 h-5"></i> Pagos
                 </a>
+                                <!-- support/admin link will be injected here based on user role -->
+                    <div id="supportItem" class="px-2 mt-2"></div>
+
+
                 <a href="settings.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
                     <i data-feather="settings" class="mr-2 w-5 h-5"></i> Configuración
                 </a>
@@ -46,7 +51,7 @@
                 <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
                     <i data-feather="calendar" class="mr-2 w-5 h-5"></i> Mantenimiento
                 </a>
-                <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+                <a href="documents.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
                     <i data-feather="file-text" class="mr-2 w-5 h-5"></i> Documentos
                 </a>
                 </nav>
@@ -74,12 +79,18 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-gray-700">Fecha de instalación</label>
-                            <input id="installDate" type="date" class="mt-2 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                            <!-- Read-only: value is loaded from the backend -->
+                            <input id="installDate" type="date" disabled class="mt-2 w-full px-3 py-2 border rounded-lg bg-gray-100" title="La fecha se obtiene del servidor" />
                         </div>
 
                         <div>
                             <label class="block text-gray-700">Próximo mantenimiento</label>
                             <div id="nextMaintenance" class="mt-2 text-lg font-bold text-green-600">—</div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700">Último mantenimiento</label>
+                            <div id="lastMaintenance" class="mt-2 text-gray-700">—</div>
                         </div>
 
                         <div>
@@ -91,9 +102,7 @@
                             <button id="requestWhatsApp" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold">Pedir cita por WhatsApp</button>
                         </div>
 
-                        <div>
-                            <button id="saveInstallation" class="w-full bg-blue-900 hover:bg-blue-800 text-white py-2 rounded-lg font-semibold">Guardar fecha de instalación</button>
-                        </div>
+                        <!-- Saving installation date is disabled; value comes from backend -->
                     </div>
                 </section>
 
@@ -118,6 +127,35 @@
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof feather !== 'undefined') feather.replace();
         });
+
+                // Populate support/admin link in sidebar based on role
+                function loadProfile() {
+                    try {
+                        const t = localStorage.getItem('token');
+                        if (!t) return;
+                        const payload = parseJwt(t);
+                                const myRole = payload.role;
+                                const supportEl = document.getElementById('supportItem');
+                                if (!supportEl) return;
+                                if (myRole === 'SUPPORT') {
+                                        supportEl.innerHTML = `\
+                                            <a href="admin-dashboard.html" class="block py-2.5 px-4 rounded bg-blue-800 text-white flex items-center mt-4">\
+                                                <i data-feather="help-circle" class="mr-2 w-5 h-5 text-blue-200"></i> Admin de usuarios\
+                                            </a>`;
+                                } else {
+                                        supportEl.innerHTML = `\
+                                            <a href="soporte.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">\
+                                                <i data-feather="help-circle" class="mr-2 w-5 h-5"></i> Soporte\
+                                            </a>`;
+                                }
+                                if (typeof feather !== 'undefined') feather.replace();
+                        } catch (e) {
+                                // ignore
+                        }
+                }
+
+                // run profile loader early
+                loadProfile();
 
         // Sidebar mobile toggle
         document.getElementById('mobileMenuButton')?.addEventListener('click', function() {
@@ -152,24 +190,94 @@
             return d.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // Load saved installation date
-        const installInput = document.getElementById('installDate');
-        const saved = localStorage.getItem('installationDate');
-        if (saved) {
-            installInput.value = saved;
-            computeAndRender(new Date(saved));
+        // API and auth
+        const API = 'http://localhost:3000/api';
+        const token = localStorage.getItem('token');
+        function parseJwt(token) {
+            try {
+                const b = token.split('.')[1];
+                return JSON.parse(decodeURIComponent(atob(b).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
+            } catch (e) { return {}; }
         }
 
+        const installInput = document.getElementById('installDate');
+        const requestBtn = document.getElementById('requestWhatsApp');
+        // start disabled until we have a date from the backend
+        if (requestBtn) {
+            requestBtn.disabled = true;
+            requestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        // Helper: parse a date-only string (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS...) into a local Date at midnight
+        function parseDateOnly(dateStr) {
+            if (!dateStr) return null;
+            const part = dateStr.split('T')[0];
+            const [y, m, d] = part.split('-').map(Number);
+            if (!y || !m || !d) return null;
+            return new Date(y, m - 1, d);
+        }
+
+        // Load installation and last maintenance from backend for authenticated user
+        async function loadInstallation() {
+            if (!token) return; // not authenticated
+            const payload = parseJwt(token);
+            const myId = payload.id;
+            if (!myId) return;
+            try {
+                const res = await fetch(API + '/users/' + myId, { headers: { Authorization: 'Bearer ' + token } });
+                if (!res.ok) return;
+                const user = await res.json();
+                // show installationDate in the read-only input if available (avoid timezone shifts)
+                const instStr = user.installationDate ? String(user.installationDate) : null;
+                if (instStr) {
+                    // take only the date part
+                    const instDatePart = instStr.split('T')[0];
+                    installInput.value = instDatePart;
+                } else {
+                    installInput.value = '';
+                }
+
+                // show lastMaintenance in the display (avoid timezone shifts)
+                const lastStr = user.lastMaintenance ? String(user.lastMaintenance) : null;
+                if (lastStr) {
+                    const lastDate = parseDateOnly(lastStr);
+                    document.getElementById('lastMaintenance').textContent = formatDate(lastDate);
+                } else {
+                    document.getElementById('lastMaintenance').textContent = '—';
+                }
+
+                // prefer lastMaintenance as the basis for next maintenance; fallback to installationDate
+                const baseDate = lastStr ? parseDateOnly(lastStr) : (instStr ? parseDateOnly(instStr) : null);
+
+                if (baseDate) {
+                    computeAndRender(baseDate, instStr || null);
+                } else {
+                    // no relevant date in DB
+                    document.getElementById('nextMaintenance').textContent = 'Fecha de instalación no registrada';
+                    document.getElementById('maintenanceList').innerHTML = '';
+                    if (requestBtn) {
+                        requestBtn.disabled = true;
+                        requestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            } catch (err) {
+                console.warn('No se pudo cargar instalación desde backend', err);
+            }
+        }
+
+        loadInstallation();
+
         // Compute next maintenance and list
-        function computeAndRender(installDate) {
-            if (!installDate || isNaN(installDate)) return;
+        // computeAndRender: baseDate is either lastMaintenance (preferred) or installationDate; installDateParam is optional original installationDate
+        function computeAndRender(baseDate, installDateParam) {
+            if (!baseDate || isNaN(baseDate)) return;
             const now = new Date();
 
-            // Build next 6 maintenances every 6 months
+            // Build next 6 maintenances every 6 months starting from the baseDate
             const list = [];
             for (let i = 1; i <= 6; i++) {
                 const monthsToAdd = i * 6;
-                const d = addMonths(installDate, monthsToAdd);
+                const d = addMonths(baseDate, monthsToAdd);
                 list.push(d);
             }
 
@@ -187,28 +295,21 @@
                 ul.appendChild(li);
             });
 
-            // Set WhatsApp button link with prefilled message
-            const phone = '+573184567890';
-            const message = encodeURIComponent(`Hola, quiero agendar una cita para mantenimiento de mi sistema el ${formatDate(next)}. Mi instalación fue el ${formatDate(installDate)}.`);
-            document.getElementById('requestWhatsApp').onclick = () => {
-                window.open(`https://wa.me/${phone.replace(/\D/g,'')}?text=${message}`, '_blank');
-            };
+            // Set WhatsApp button link with prefilled message (enable button)
+            const phone = '+573159620834';
+            const phoneDigits = phone.replace(/\D/g, '');
+            // If we have an installationDate, include it in the message; otherwise omit
+            const installPart = installDateParam ? ` Mi instalación fue el ${formatDate(parseDateOnly(installDateParam))}.` : '';
+            const message = `Hola, quiero agendar una cita para mantenimiento de mi sistema el ${formatDate(next)}.${installPart}`;
+            const encoded = encodeURIComponent(message);
+            const waUrl = `https://api.whatsapp.com/send?phone=${phoneDigits}&text=${encoded}`;
+            if (requestBtn) {
+                requestBtn.disabled = false;
+                requestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                requestBtn.onclick = () => window.open(waUrl, '_blank');
+            }
         }
-
-        // Save installation
-        document.getElementById('saveInstallation').addEventListener('click', () => {
-            const val = installInput.value;
-            if (!val) { alert('Por favor selecciona la fecha de instalación.'); return; }
-            localStorage.setItem('installationDate', val);
-            computeAndRender(new Date(val));
-            alert('Fecha de instalación guardada.');
-        });
-
-        // When user changes the date input live
-        installInput.addEventListener('change', () => {
-            const v = installInput.value;
-            if (v) computeAndRender(new Date(v));
-        });
+        // Note: saving the installation date from the client is disabled. The date is authoritative from the server.
     </script>
 </body>
 </html>

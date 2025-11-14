@@ -8,8 +8,8 @@ const PORT = process.env.PORT || 3000;
   try {
     await sequelize.authenticate();
     console.log('DB connected');
-    // sync models
-    await sequelize.sync(); // usa { force: true } solo si quieres resetear
+  // sync models - use alter to update existing tables to match models (adds new columns safely)
+  await sequelize.sync({ alter: true }); // for dev: use migrations in production
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });

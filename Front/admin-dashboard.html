@@ -22,13 +22,10 @@
       <a id="linkDashboard" href="user-dashboard.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
         <i data-feather="home" class="mr-2 w-5 h-5"></i> Inicio
       </a>
-      <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+      <a href="monitoring.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
         <i data-feather="activity" class="mr-2 w-5 h-5"></i> Monitoreo
       </a>
-      <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
-        <i data-feather="bar-chart-2" class="mr-2 w-5 h-5"></i> Estadísticas
-      </a>
-      <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+      <a href="payments.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
         <i data-feather="credit-card" class="mr-2 w-5 h-5"></i> Pagos
       </a>
 
@@ -46,7 +43,7 @@
       <a href="maintenance.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
         <i data-feather="calendar" class="mr-2 w-5 h-5"></i> Mantenimiento
       </a>
-      <a href="#" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
+      <a href="documents.html" class="block py-2.5 px-4 rounded hover:bg-blue-800 text-blue-200 hover:text-white transition flex items-center mt-1">
         <i data-feather="file-text" class="mr-2 w-5 h-5"></i> Documentos
       </a>
     </nav>
@@ -113,6 +110,8 @@
                 <th class="px-4 py-2 text-left">Nombre</th>
                 <th class="px-4 py-2 text-left">Email</th>
                 <th class="px-4 py-2 text-left">Rol</th>
+                <th class="px-4 py-2 text-left">Fecha instalación</th>
+                <th class="px-4 py-2 text-left">Último mantenimiento</th>
                 <th class="px-4 py-2 text-left">Creado</th>
                 <th class="px-4 py-2 text-left">Acciones</th>
               </tr>
@@ -191,12 +190,18 @@
         <td class="px-4 py-2 border">${escapeHtml(u.name)}</td>
         <td class="px-4 py-2 border">${escapeHtml(u.email)}</td>
         <td class="px-4 py-2 border">${u.role}</td>
+        <td class="px-4 py-2 border">${u.installationDate ? new Date(u.installationDate).toLocaleDateString() : '-'}</td>
+        <td class="px-4 py-2 border">${u.lastMaintenance ? new Date(u.lastMaintenance).toLocaleDateString() : '-'}</td>
         <td class="px-4 py-2 border">${new Date(u.createdAt).toLocaleString()}</td>
         <td class="px-4 py-2 border space-x-2">
+          <button data-id="${u.id}" class="editBtn px-2 py-1 bg-blue-500 text-white rounded">Editar</button>
           <button data-id="${u.id}" class="delBtn px-2 py-1 bg-red-500 text-white rounded">Eliminar</button>
         </td>`;
       tbody.appendChild(tr);
     });
+
+    // Render charts based on the freshly fetched user list
+    try { renderUserCharts(r.data); } catch (e) { console.error('Error rendering charts', e); }
 
     document.querySelectorAll('.delBtn').forEach(b => b.addEventListener('click', async (e) => {
       const id = e.currentTarget.dataset.id;
@@ -204,6 +209,49 @@
       const r = await api('/users/' + id, { method: 'DELETE' });
       if (r.status === 204 || r.ok) { loadUsers(); } else { alert(r.data.message || 'Error al eliminar'); }
     }));
+
+    // Edit button handlers
+    document.querySelectorAll('.editBtn').forEach(b => b.addEventListener('click', (e) => {
+      const id = Number(e.currentTarget.dataset.id);
+      // find user data from last fetched list (r.data)
+      const u = r.data.find(x => x.id === id);
+      if (!u) return alert('Usuario no encontrado');
+      openEditModal(u);
+    }));
+  }
+
+  // --- Edit modal logic ---
+  function formatForInput(d) {
+    if (!d) return '';
+    try { return new Date(d).toISOString().split('T')[0]; } catch(e){ return ''; }
+  }
+
+  function openEditModal(user) {
+    const modal = document.getElementById('editModal');
+    document.getElementById('editUserId').textContent = user.id;
+    document.getElementById('editName').textContent = user.name;
+    document.getElementById('editInstallation').value = formatForInput(user.installationDate);
+    document.getElementById('editLastMaintenance').value = formatForInput(user.lastMaintenance);
+    modal.classList.remove('hidden');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+  }
+
+  async function saveEdit() {
+    const id = Number(document.getElementById('editUserId').textContent);
+    const installation = document.getElementById('editInstallation').value;
+    const lastMaintenance = document.getElementById('editLastMaintenance').value;
+    const body = {};
+    // send undefined only if empty to avoid overwriting unintentionally? we'll send null if empty to clear
+    body.installationDate = installation ? installation : null;
+    body.lastMaintenance = lastMaintenance ? lastMaintenance : null;
+
+    const r = await api('/users/' + id, { method: 'PUT', body: JSON.stringify(body) });
+    if (!r.ok) return alert(r.data.message || 'Error al guardar');
+    closeEditModal();
+    loadUsers();
   }
 
   document.getElementById('createForm').addEventListener('submit', async (e) => {
@@ -234,26 +282,81 @@
   });
 
   // Gráficas de ejemplo
-  function initCharts() {
-    const ctx1 = document.getElementById('chartProduction');
-    new Chart(ctx1, { type: 'line',
-      data: { labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul'],
-      datasets: [{ label: 'Producción (kWh)', data: [120,150,170,160,190,220,210], borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)' }] },
-      options: { responsive: true, maintainAspectRatio: false }});
+  // Charts driven by user data
+  let chartRoles = null;
+  let chartInstallations = null;
 
-    const ctx2 = document.getElementById('chartConsumption');
-    new Chart(ctx2, { type: 'bar',
-      data: { labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul'],
-      datasets: [{ label: 'Consumo (kWh)', data: [80,90,100,95,110,130,125], backgroundColor: '#1E3A8A' }] },
-      options: { responsive: true, maintainAspectRatio: false }});
+  function renderUserCharts(users) {
+    // Compute roles distribution
+    const roles = users.reduce((acc, u) => {
+      acc[u.role] = (acc[u.role] || 0) + 1;
+      return acc;
+    }, {});
+
+    const roleLabels = Object.keys(roles);
+    const roleData = roleLabels.map(l => roles[l]);
+
+    // Prepare last 12 months labels (from oldest to newest)
+    const months = [];
+    const counts = new Array(12).fill(0);
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(d.toLocaleString('es-ES', { month: 'short', year: 'numeric' }));
+    }
+
+    // Count installations per month
+    users.forEach(u => {
+      if (!u.installationDate) return;
+      const d = new Date(u.installationDate);
+      if (isNaN(d)) return;
+      // calculate months difference from start of the oldest bucket
+      const oldest = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+      if (d < oldest) return;
+      const diff = (d.getFullYear() - oldest.getFullYear()) * 12 + (d.getMonth() - oldest.getMonth());
+      if (diff >= 0 && diff < 12) counts[diff] = counts[diff] + 1;
+    });
+
+    // Roles chart (doughnut) on #chartProduction
+    const ctxRoles = document.getElementById('chartProduction');
+    if (chartRoles) chartRoles.destroy();
+    chartRoles = new Chart(ctxRoles, {
+      type: 'doughnut',
+      data: { labels: roleLabels, datasets: [{ data: roleData, backgroundColor: ['#10B981', '#1E3A8A', '#F59E0B'] }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // Installations per month chart (bar) on #chartConsumption
+    const ctxInst = document.getElementById('chartConsumption');
+    if (chartInstallations) chartInstallations.destroy();
+    chartInstallations = new Chart(ctxInst, {
+      type: 'bar',
+      data: { labels: months, datasets: [{ label: 'Instalaciones', data: counts, backgroundColor: '#1E3A8A' }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
   }
 
   // init sidebar links according to role
   loadProfile().then(() => {
     feather.replace();
-    initCharts();
     loadUsers();
   });
   </script>
+  <!-- Edit modal -->
+  <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center hidden">
+    <div class="bg-white rounded shadow-lg w-11/12 md:w-1/3 p-4">
+      <h3 class="text-lg font-semibold mb-2">Editar usuario <span id="editName" class="font-medium"></span> (<span id="editUserId"></span>)</h3>
+      <div class="grid gap-2">
+        <label class="text-sm">Fecha de instalación</label>
+        <input id="editInstallation" type="date" class="p-2 border rounded" />
+        <label class="text-sm">Último mantenimiento</label>
+        <input id="editLastMaintenance" type="date" class="p-2 border rounded" />
+      </div>
+      <div class="mt-4 flex justify-end space-x-2">
+        <button onclick="closeEditModal()" class="px-3 py-1 border rounded">Cancelar</button>
+        <button onclick="saveEdit()" class="px-3 py-1 bg-green-600 text-white rounded">Guardar</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

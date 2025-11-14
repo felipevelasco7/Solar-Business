@@ -4,11 +4,11 @@ exports.list = async (req, res, next) => {
   try {
     // SUPPORT can list everyone; CLIENT only own (handled below)
     if (req.user.role === 'SUPPORT') {
-      const users = await User.findAll({ attributes: ['id', 'name', 'email', 'role', 'createdAt'] });
+      const users = await User.findAll({ attributes: ['id', 'name', 'email', 'role', 'createdAt', 'installationDate', 'lastMaintenance'] });
       return res.json(users);
     }
     // CLIENT: only own record
-    const user = await User.findByPk(req.user.id, { attributes: ['id', 'name', 'email', 'role', 'createdAt'] });
+    const user = await User.findByPk(req.user.id, { attributes: ['id', 'name', 'email', 'role', 'createdAt', 'installationDate', 'lastMaintenance'] });
     if (!user) return res.status(404).json({ message: 'Not found' });
     res.json([user]);
   } catch (err) {
@@ -20,7 +20,8 @@ exports.get = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (req.user.role !== 'SUPPORT' && req.user.id !== id) return res.status(403).json({ message: 'Forbidden' });
-    const user = await User.findByPk(id, { attributes: ['id', 'name', 'email', 'role', 'createdAt'] });
+    // include installationDate and lastMaintenance so clients can read maintenance info
+    const user = await User.findByPk(id, { attributes: ['id', 'name', 'email', 'role', 'createdAt', 'installationDate', 'lastMaintenance'] });
     if (!user) return res.status(404).json({ message: 'Not found' });
     res.json(user);
   } catch (err) {
@@ -50,7 +51,7 @@ exports.update = async (req, res, next) => {
     // autorización: SUPPORT puede cualquier cosa; CLIENT solo su propio registro
     if (req.user.role !== 'SUPPORT' && req.user.id !== id) return res.status(403).json({ message: 'Forbidden' });
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, installationDate, lastMaintenance } = req.body;
     const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ message: 'Not found' });
 
@@ -58,6 +59,19 @@ exports.update = async (req, res, next) => {
     if (email) user.email = email;
     if (password) user.password = password; // hook antes de guardar hará el hash
     if (role && req.user.role === 'SUPPORT') user.role = role === 'SUPPORT' ? 'SUPPORT' : 'CLIENT';
+
+    // installationDate can be set by the user for their own account, or by SUPPORT for any user
+    if (typeof installationDate !== 'undefined') {
+      // accept ISO date or null
+      user.installationDate = installationDate ? new Date(installationDate) : null;
+    }
+
+    // lastMaintenance should normally be set by SUPPORT, but allow user to set their own too
+    if (typeof lastMaintenance !== 'undefined') {
+      if (req.user.role === 'SUPPORT' || req.user.id === id) {
+        user.lastMaintenance = lastMaintenance ? new Date(lastMaintenance) : null;
+      }
+    }
 
     await user.save();
 
